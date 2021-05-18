@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>OpenCV</title>
+
+</head>
+<body>
+
+   <div>
+       <p id="welcomeMsg"> Loading OpenCV...</p>
+       <input type="file" name="file" id="fileUpload" onchange="getImgSrc()" accept="image/png, image/gif, image/jpeg"> 
+
+   </div> 
+
+   <div class="row">
+       <img id="src-img" alt="">
+       <canvas id="edited-img" width="300" height="300"></canvas>
+   </div>
+
+<script src="script.js" type="text/javascript"></script>
+<script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</body>
+</html>

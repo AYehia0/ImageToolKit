@@ -1,0 +1,10 @@
+.row {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+}
+
+.row img, .row canvas {
+    width: 300px;
+    margin-right: 20px;
+}
