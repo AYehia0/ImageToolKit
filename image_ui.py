@@ -1,11 +1,23 @@
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from PyQt5.QtGui import QImageReader
 from PyQt5.QtWidgets import QFileDialog, QWidget
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+
+from opencv_back import *
 import sys, os    
 import io
 from PIL import Image, ImageCms
 
+### Global vars ###
+# Image Path
+
 class Ui_MainWindow(object):
+
+    ## INIT ##
+    def __init__(self):
+        self.IMG_PATH = ""
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1124, 939)
@@ -303,7 +315,7 @@ class Ui_MainWindow(object):
         self.imported_label = QtWidgets.QLabel(self.imported_box)
         self.imported_label.setGeometry(QtCore.QRect(6, 23, 321, 241))
         self.imported_label.setText("")
-        self.imported_label.setPixmap(QtGui.QPixmap("flower.jpg"))
+        self.imported_label.setPixmap(QtGui.QPixmap(""))
         self.imported_label.setScaledContents(True)
         self.imported_label.setObjectName("imported_label")
 
@@ -314,6 +326,7 @@ class Ui_MainWindow(object):
         self.noise_label = QtWidgets.QLabel(self.noise_box)
         self.noise_label.setGeometry(QtCore.QRect(6, 23, 331, 241))
         self.noise_label.setText("")
+        self.noise_label.setScaledContents(True)
         self.noise_label.setObjectName("noise_label")
 
         self.result_box = QtWidgets.QGroupBox(self.centralwidget)
@@ -323,6 +336,7 @@ class Ui_MainWindow(object):
         self.result_label = QtWidgets.QLabel(self.result_box)
         self.result_label.setGeometry(QtCore.QRect(6, 23, 331, 241))
         self.result_label.setText("")
+        self.result_label.setScaledContents(True)
         self.result_label.setObjectName("result_label")
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -337,9 +351,14 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-
         ### Import Button ###
         self.add_image_button.clicked.connect(self.import_image)
+
+        ### Default RGB ###
+        self.default_color_radio.clicked.connect(self.display_default)
+
+        ### Grey Scale ###
+        self.grey_color_radio.clicked.connect(self.display_grey)
 
         ### Exit Button ###
         self.exit_button.clicked.connect(self.exit_program)
@@ -396,14 +415,41 @@ class Ui_MainWindow(object):
         self.noise_box.setTitle(_translate("MainWindow", "Noise"))
         self.result_box.setTitle(_translate("MainWindow", "Result"))
 
-
-
     def exit_program(self): 
         """Exit when exit button is pressed"""
         sys.exit()
 
+    def display_default(self):
+        """Display the defualt imported image"""
+
+        # getting the path 
+        if len(self.IMG_PATH) == 0:
+            return
+
+        # Converting the image to srgb to avoid errors
+        self.convert_to_srgb(self.IMG_PATH)
+        self.show_img_in_label(self.imported_label, self.IMG_PATH)
+
+    def display_grey(self):
+        """Show the grey scale img"""
+
+        if len(self.IMG_PATH) == 0:
+            return
+
+        img = conv_grey(self.IMG_PATH)
+        
+        rows, columns = img.shape
+        bytesPerLine = columns
+
+        # QImage is the best way to do it 
+        QImg = QImage(img.data, columns, rows, bytesPerLine, QImage.Format_Indexed8)
+
+        # Showing the img
+        self.show_img_in_label(self.result_label, QImg)
+
+
     def import_image(self):
-        """Import an image using: getOpenFileName in QFileDialog"""
+        """Import an image using: getOpenFileName in QFileDialog and return its path"""
 
         # get all supported image formats
         supportedFormats = QImageReader.supportedImageFormats()
@@ -417,14 +463,12 @@ class Ui_MainWindow(object):
             filter = text_filter
         )
 
-        # The path is first index of the tuple
-        path = res[0]
-        self.convert_to_srgb(path)
-        #self.imported_label.setPixmap(QtGui.QPixmap(path))
-        self.show_img_in_label(self.imported_label, path)
+        # Setting the global var
+        self.IMG_PATH = res[0]
 
     def convert_to_srgb(self, file_path):
         '''Convert PIL image to sRGB color space (if possible)'''
+
         img = Image.open(file_path)
         icc = img.info.get('icc_profile', '')
         if icc:
@@ -446,11 +490,3 @@ class Ui_MainWindow(object):
         label.setPixmap(QtGui.QPixmap(img_path))
 
 
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
