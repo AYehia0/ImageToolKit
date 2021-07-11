@@ -17,6 +17,8 @@ class Ui_MainWindow(object):
     ## INIT ##
     def __init__(self):
         self.IMG_PATH = ""
+        self.MAX_BRIGHTNESS = 510
+        self.MAX_CONTRAST = 254
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -85,6 +87,11 @@ class Ui_MainWindow(object):
         self.point_transform_box.setObjectName("point_transform_box")
         self.brightness_slider = QtWidgets.QSlider(self.point_transform_box)
         self.brightness_slider.setGeometry(QtCore.QRect(200, 30, 111, 20))
+
+        # Setting the Slider max and min values
+        self.brightness_slider.setMinimum(0)
+        self.brightness_slider.setMaximum(self.MAX_BRIGHTNESS)
+        
         font = QtGui.QFont()
         font.setPointSize(10)
         self.brightness_slider.setFont(font)
@@ -98,6 +105,18 @@ class Ui_MainWindow(object):
         self.brightness_label.setObjectName("brightness_label")
         self.contrast_slider = QtWidgets.QSlider(self.point_transform_box)
         self.contrast_slider.setGeometry(QtCore.QRect(200, 60, 111, 20))
+
+        # Setting up contrast max and min values
+        self.contrast_slider.setMinimum(0)
+        self.contrast_slider.setMaximum(self.MAX_CONTRAST)
+
+
+
+        # Checking for the sliders 
+        self.brightness_slider.valueChanged.connect(self.brightness_contrast)
+        self.contrast_slider.valueChanged.connect(self.brightness_contrast)
+
+
         font = QtGui.QFont()
         font.setPointSize(10)
         self.contrast_slider.setFont(font)
@@ -430,6 +449,32 @@ class Ui_MainWindow(object):
         self.convert_to_srgb(self.IMG_PATH)
         self.show_img_in_label(self.imported_label, self.IMG_PATH)
 
+    def get_QImg_grey(self, img):
+        """Getting the QImage back if img is grey scale,, idk why this happens"""
+
+        rows, columns = img.shape
+        bytesPerLine = columns
+
+        # QImage is the best way to do it 
+        QImg = QImage(img.data, columns, rows, bytesPerLine, QImage.Format_Indexed8)
+
+        return QImg
+
+
+
+    def get_Qimg_mod_contrast_brightness(self, img):
+        """get the QImage back to show the image in the qlabel"""
+        
+        if img is None:
+            return
+
+        height, width, channel = img.shape
+        bytesPerLine = 3 * width
+        QImg = QImage(img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        return QImg
+
+
+
     def display_grey(self):
         """Show the grey scale img"""
 
@@ -437,12 +482,8 @@ class Ui_MainWindow(object):
             return
 
         img = conv_grey(self.IMG_PATH)
-        
-        rows, columns = img.shape
-        bytesPerLine = columns
 
-        # QImage is the best way to do it 
-        QImg = QImage(img.data, columns, rows, bytesPerLine, QImage.Format_Indexed8)
+        QImg = self.get_QImg_grey(img)
 
         # Showing the img
         self.show_img_in_label(self.result_label, QImg)
@@ -490,3 +531,31 @@ class Ui_MainWindow(object):
         label.setPixmap(QtGui.QPixmap(img_path))
 
 
+    def valuechange_brightness(self):
+        """get the value from the brightness slider"""
+
+        modified_brightness = self.brightness_slider.value()
+        
+        return modified_brightness
+
+    def valuechange_contrast(self):
+        """get the value from the contrast slider"""
+
+        modified_contrast = self.contrast_slider.value()
+        
+        return modified_contrast
+
+    def brightness_contrast(self):
+        """Change brightness and contrast"""
+
+        bright = self.valuechange_brightness()
+        con = self.valuechange_contrast()
+
+        img = read_img(self.IMG_PATH)
+        effect = controller(img, bright, con)
+
+        # getting the QImage 
+        QImg = self.get_Qimg_mod_contrast_brightness(effect)
+
+        # Showing the img
+        self.show_img_in_label(self.noise_label, QImg)
