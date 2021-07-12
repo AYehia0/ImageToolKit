@@ -55,6 +55,7 @@ Those with * after either don't work, or not yet implemented.
 - This is a beta version, with a lot of code faults, need to be refactored. 
 - The GUI is compact, i was busy doing the backend rather than fixing the frontend.
 - This may work on linux, but i didn't test.
+- You must install the requirements first.
 
 ## ScreenShots
 
