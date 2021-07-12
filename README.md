@@ -57,3 +57,10 @@ Those with * after either don't work, or not yet implemented.
 - This may work on linux, but i didn't test.
 
 ## ScreenShots
+
+![Main](project/1.PNG)
+![Main](project/edge.PNG)
+![Main](project/histo.PNG)
+![Main](project/lp_filter.PNG)
+![Main](project/noise_rem.PNG)
+![Main](project/line_detection.PNG)
