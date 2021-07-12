@@ -28,14 +28,14 @@ This is an Image Processing ToolKit, using PyQt for the frontend and openCV for 
                 - Vert Prewitt
                 - Zero Cross
                 - Gaussian filter
-                - Horiz prewitt
-                - Thicken
+                - Horiz prewitt *
+                - Thicken *
                 - Vert sobel
                 - Laplacian of Gaussian (log)
-                - Skeleton 
-                - Horiz 
+                - Skeleton *
+                - Horiz *
                 - Canny method
-                - Thinning
+                - Thinning *
 
         - Global Transformtion :
             
