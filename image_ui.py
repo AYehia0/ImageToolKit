@@ -3,11 +3,14 @@ from PyQt5.QtGui import QImageReader
 from PyQt5.QtWidgets import QFileDialog, QWidget
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-
+from matplotlib import pyplot as plt
+from numpy import histogram
+from numpy.random.mtrand import random 
 from opencv_back import *
 import sys, os    
 import io
 from PIL import Image, ImageCms
+from custom_filters import *
 
 ### Global vars ###
 # Image Path
@@ -182,12 +185,12 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         self.lap_filter_radio.setFont(font)
         self.lap_filter_radio.setObjectName("lap_filter_radio")
-        self.gaussian_filter_radio = QtWidgets.QRadioButton(self.edge_filter_box)
-        self.gaussian_filter_radio.setGeometry(QtCore.QRect(20, 50, 111, 20))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.gaussian_filter_radio.setFont(font)
-        self.gaussian_filter_radio.setObjectName("gaussian_filter_radio")
+        # self.gaussian_filter_radio = QtWidgets.QRadioButton(self.edge_filter_box)
+        # self.gaussian_filter_radio.setGeometry(QtCore.QRect(20, 50, 111, 20))
+        # font = QtGui.QFont()
+        # font.setPointSize(10)
+        # self.gaussian_filter_radio.setFont(font)
+        # self.gaussian_filter_radio.setObjectName("gaussian_filter_radio")
         self.vert_sobel_radio = QtWidgets.QRadioButton(self.edge_filter_box)
         self.vert_sobel_radio.setGeometry(QtCore.QRect(20, 70, 99, 20))
         font = QtGui.QFont()
@@ -224,12 +227,12 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         self.canny_radio.setFont(font)
         self.canny_radio.setObjectName("canny_radio")
-        self.zero_cross_radio = QtWidgets.QRadioButton(self.edge_filter_box)
-        self.zero_cross_radio.setGeometry(QtCore.QRect(290, 70, 99, 20))
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.zero_cross_radio.setFont(font)
-        self.zero_cross_radio.setObjectName("zero_cross_radio")
+        # self.zero_cross_radio = QtWidgets.QRadioButton(self.edge_filter_box)
+        # self.zero_cross_radio.setGeometry(QtCore.QRect(290, 70, 99, 20))
+        # font = QtGui.QFont()
+        # font.setPointSize(10)
+        # self.zero_cross_radio.setFont(font)
+        # self.zero_cross_radio.setObjectName("zero_cross_radio")
         self.thicken_radio = QtWidgets.QRadioButton(self.edge_filter_box)
         self.thicken_radio.setGeometry(QtCore.QRect(290, 90, 99, 20))
         font = QtGui.QFont()
@@ -379,6 +382,51 @@ class Ui_MainWindow(object):
         ### Grey Scale ###
         self.grey_color_radio.clicked.connect(self.display_grey)
 
+        ### Histogram ###
+        self.draw_histo_button.clicked.connect(self.draw_histogram)
+
+        ### Histogram Equalization ###
+        self.histo_equalization_button.clicked.connect(self.histogram_equalization)
+
+        ### Filters ###
+
+        ### Low Pass filter ###
+        self.lp_filter_button.clicked.connect(self.show_lp)
+
+        ### High Pass filter ###
+        self.hp_filter_button.clicked.connect(self.show_hp)
+        
+        ### Median Filter ###
+        self.median_filter_button.clicked.connect(self.show_median)
+        
+        ### Averaging Filter ###
+        self.avg_filter_button.clicked.connect(self.show_avg)
+
+        ### Noise ###
+        self.gaussian_noise_radio.clicked.connect(self.add_gaussian)
+        self.salt_pepper_radio.clicked.connect(self.add_salt_and_pep)
+        self.poisson_radio.clicked.connect(self.add_poisson)
+        
+        ### Edge Detection ###
+        self.canny_radio.clicked.connect(self.do_canny)
+        self.log_radio.clicked.connect(self.do_log)
+        self.vert_prewitt_radio.clicked.connect(self.do_vert_prewitt)
+        self.hor_prewitt_radio.clicked.connect(self.do_hor_prewitt)
+        self.vert_sobel_radio.clicked.connect(self.do_vert_sobel)
+        self.hor_sobel_radio.clicked.connect(self.do_hor_sobel)
+        self.lap_filter_radio.clicked.connect(self.do_laplacian)
+
+
+        ### Global Tranformation ###
+        self.hough_line_button.clicked.connect(self.do_line_hough)
+        self.hough_circle_button.clicked.connect(self.do_circle_hough)
+
+        ### Mono shit ###
+        self.dilation_button.clicked.connect(self.do_dilation)
+        self.erosion_button.clicked.connect(self.do_erosion)
+        self.open_button.clicked.connect(self.do_opening)
+        self.close_button.clicked.connect(self.do_closing)
+
         ### Exit Button ###
         self.exit_button.clicked.connect(self.exit_program)
 
@@ -406,14 +454,14 @@ class Ui_MainWindow(object):
         self.avg_filter_button.setText(_translate("MainWindow", "Averaging Filter"))
         self.edge_filter_box.setTitle(_translate("MainWindow", "Edge Detection Filters"))
         self.lap_filter_radio.setText(_translate("MainWindow", "Laplacian Filter"))
-        self.gaussian_filter_radio.setText(_translate("MainWindow", "Gaussian Filter"))
+
         self.vert_sobel_radio.setText(_translate("MainWindow", "Vert Sobel"))
         self.hor_sobel_radio.setText(_translate("MainWindow", "Hor Sobel"))
         self.vert_prewitt_radio.setText(_translate("MainWindow", "Vert Prewitt"))
         self.log_radio.setText(_translate("MainWindow", "LoG"))
         self.hor_prewitt_radio.setText(_translate("MainWindow", "Hor Prewitt"))
         self.canny_radio.setText(_translate("MainWindow", "Canny"))
-        self.zero_cross_radio.setText(_translate("MainWindow", "Zero Cross"))
+
         self.thicken_radio.setText(_translate("MainWindow", "Thicken"))
         self.skeleton_radio.setText(_translate("MainWindow", "Skeleton"))
         self.thining_radio.setText(_translate("MainWindow", "Thining"))
@@ -460,8 +508,6 @@ class Ui_MainWindow(object):
 
         return QImg
 
-
-
     def get_Qimg_mod_contrast_brightness(self, img):
         """get the QImage back to show the image in the qlabel"""
         
@@ -471,9 +517,8 @@ class Ui_MainWindow(object):
         height, width, channel = img.shape
         bytesPerLine = 3 * width
         QImg = QImage(img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+        
         return QImg
-
-
 
     def display_grey(self):
         """Show the grey scale img"""
@@ -488,7 +533,43 @@ class Ui_MainWindow(object):
         # Showing the img
         self.show_img_in_label(self.result_label, QImg)
 
+    def add_gaussian(self):
 
+        if len(self.IMG_PATH) == 0:
+            return
+
+        noise = random_noise(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(noise)
+
+        # Showing the img
+        self.show_img_in_label(self.noise_label, QImg)
+
+    def add_salt_and_pep(self):
+        if len(self.IMG_PATH) == 0:
+            return
+
+        noise = s_and_p(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(noise)
+
+        # Showing the img
+        self.show_img_in_label(self.noise_label, QImg)
+
+  
+    def add_poisson(self):
+        if len(self.IMG_PATH) == 0:
+            return
+
+        noise = poisson(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(noise)
+
+        # Showing the img
+        self.show_img_in_label(self.noise_label, QImg)
+
+      
+ 
     def import_image(self):
         """Import an image using: getOpenFileName in QFileDialog and return its path"""
 
@@ -559,3 +640,264 @@ class Ui_MainWindow(object):
 
         # Showing the img
         self.show_img_in_label(self.noise_label, QImg)
+
+    def draw_histogram(self):
+        """Draw the histogram and return the img"""
+
+        if not self.IMG_PATH:
+            return
+
+        img = read_img(self.IMG_PATH)
+
+        plt.hist(img.ravel(), 256, [0,256])
+
+        plt.show()
+    
+    def histogram_equalization(self):
+        """Draw a simple hitogram equalization chart"""
+    
+        if not self.IMG_PATH:
+            return
+
+        eq = histogram_eq(self.IMG_PATH)
+
+        QImg = self.get_QImg_grey(eq)
+
+        # showing the img
+
+        self.show_img_in_label(self.result_label, QImg)
+
+    def show_lp(self):
+
+        if not self.IMG_PATH:
+            return
+
+        lp = lp_filter(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(lp)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+ 
+    def show_hp(self):
+
+        if not self.IMG_PATH:
+            return
+
+        hp = hp_filter(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(hp)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+
+    def show_median(self):
+
+        if not self.IMG_PATH:
+            return
+
+        hp = median_filter(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(hp)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+    def show_avg(self):
+
+        if not self.IMG_PATH:
+            return
+
+        avg = avg_filter(self.IMG_PATH)
+
+        QImg = self.get_Qimg_mod_contrast_brightness(avg)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+    def do_canny(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        canny_img = canny(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(canny_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+    
+    def do_laplacian(self):
+        
+        if not self.IMG_PATH:
+           return
+        
+        lap_img = laplacian(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(lap_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+
+    def do_log(self):
+
+  
+        if not self.IMG_PATH:
+           return
+        
+        log_img = log_filter(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_Qimg_mod_contrast_brightness(log_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+  
+    def do_hor_prewitt(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        prw_y_img = prewitt_y(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(prw_y_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+
+    def do_vert_prewitt(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        prw_x_img = prewitt_x(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(prw_x_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+
+    def do_hor_sobel(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        sobel_y_img = sobel_y(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(sobel_y_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)  
+
+    def do_vert_sobel(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        sobel_x_img = sobel_x(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(sobel_x_img)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+
+    def do_line_hough(self):
+        
+        if not self.IMG_PATH:
+           return
+        
+        line = line_hough(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_Qimg_mod_contrast_brightness(line)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)    
+    
+    def do_circle_hough(self):
+        
+        if not self.IMG_PATH:
+           return
+        
+        circle = circle_hough(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_Qimg_mod_contrast_brightness(circle)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+
+    def do_dilation(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        dil = dilation(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_Qimg_mod_contrast_brightness(dil)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+    def do_erosion(self):
+
+        if not self.IMG_PATH:
+           return
+        
+        ero = erosion(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_Qimg_mod_contrast_brightness(ero)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)
+
+    def do_opening(self):
+        
+        if not self.IMG_PATH:
+           return
+        
+        opn = open_(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(opn)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)      
+
+    def do_closing(self):
+        
+        if not self.IMG_PATH:
+           return
+        
+        cls = close_(self.IMG_PATH)
+
+        # showing 
+
+        QImg = self.get_QImg_grey(cls)
+
+        # showing 
+        self.show_img_in_label(self.result_label, QImg)      
+      
