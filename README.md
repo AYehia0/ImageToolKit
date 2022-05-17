@@ -1,4 +1,27 @@
+# Image TookKit
+
 This is an Image Processing ToolKit, using PyQt for the frontend and openCV for backend.
+
+## Installation
+- Make sure to install all the requirements by : `pip install -r requirements.txt`
+- Install `Qt5` for your system, for ex, I am using arch btw : [qt5](https://archlinux.org/packages/extra/x86_64/qt5-base/)
+- Run `python main.py`
+
+### Notes
+- The program is only executable using the command line, you can convert it to `.exe` idk.
+- If you face a problem with `Qt5` and `open-cv` : 
+```
+    QObject::moveToThread: Current thread (0x559f0cee5f50) is not the object's thread (0x559f0d6c5520).
+    Cannot move to target thread (0x559f0cee5f50)
+
+    qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "/home/username/.local/lib/python3.10/site-packages/cv2/qt/plugins" even though it was found.
+    This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+    Available platform plugins are: xcb, eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, wayland-egl, wayland, wayland-xcomposite-egl, wayland-xcomposite-glx, webgl.
+
+    zsh: IOT instruction (core dumped)  python main.py
+``` 
+check [this](https://stackoverflow.com/a/63839383/16787671)
 
 ## Feature List 
 Those with * after either don't work, or not yet implemented.
