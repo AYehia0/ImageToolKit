@@ -1,5 +1,6 @@
-opencv
+opencv-python
 numpy
-pyqt
-PIL
-skimage
+PyQt5
+Pillow
+scikit-image
+matplotlib
